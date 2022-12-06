@@ -1,0 +1,163 @@
+FischerTechnik_Origional_program_V16 (23-9-2022)
+	The origional program uploaded from the PLC, the software the system was delivered with.
+	
+	Notes:
+		Equal to the software on Github (last checked: 1-11-2022).
+
+
+FischerTechnik_Origional_program_V16_V17 (23-9-2022)
+	The origional program converted from Tia Portal V16 to V17.
+	
+	Changes:
+		Default color calibration value was changed
+
+	Notes:
+		To be able to upload this program the PLC was upgraded to V17 also.
+
+
+Program_v0.1 (10-10-2022)
+	The first step to add parameters to the factory has been added. The parameters can be set by the user via the dashboard.
+	The parameters directly influence the factory.
+
+	Changes:
+		A global datablock "Parameters" has been added.
+		In this datablock 4 parameters have been added; OvenTime(Time), SawTime(Time), DoOven(Bool), DoSaw(Bool).
+		These for parameters are set directly from the NodeRed dashboard.
+		The parameters are used in the program block "PGR_MPO_Ablauf".
+		An extra case has been added (251) to be able to skip the saw.
+
+	Problems:
+		The parameters work on the factory level and not on the product level.
+
+
+Program_v0.2 (13-10-2022)
+	The parameters are send with each order. They are passed from the dashboard to the VGR and from the VGR to the MPO.
+
+	Changes:
+		A new datatype has been created: typ_Workpiece_Parameters.
+		An instance of this type has been added to the OrderWorkPieceButton in the dashboard.
+		An instance of this type has also been added to the typ_VGR and typ_MPO.
+		The workiece parameters in the dashboard get set by the user when an order is placed.
+		When the VGR is ready for outsource the workpiece parameters are copied to the VGR (in PGR_Order).
+		When the VGR puts the part on the MPO the workpiece parameters get copied over (in PGR_MPO_Ablauf).
+		The local workpiece parameters are used the same way as before.
+
+	Problems:
+		When a new order is placed before the VGR is ready, the order parameters of the new part will be used.
+
+
+Program_v0.3 (31-10-2022)
+	For the main axis of the VGR and HBW an acceleration and deceleration curve has been added.
+
+	Changes:
+		The Cyclic Interrupt interval time has been reduced from 1000 us to 700 us.
+		A new function block has been created: FB_Axis_Auto.
+		This function block is identical to the existing FB_Axis, except for the addition of PWM control based on location.
+		A minimum and maximum PWM are defined in the function block.
+		The PWM is set to the distance to travel plus the minimum PWM, capped by the maximum PWM. This creates deceleration.
+		For acceleration, a variable is created that is added to the current PWM if the desired PWM is higher, creating acceleration.
+		A few exceptions are also caught, for instance, when the factory is powered up, the PWM are set to minumum.
+
+	Notes:
+		Reducing the Cyclic Interrupt interval even further results in the main cycle not completing (PLC goes in error).
+		The FB_Axis_Auto function block does not change the default PWM when manually moving the axis (from the dashboard).
+
+	Problems:
+		The function block ignores the PWM given on the input and always uses the calculated value.
+
+
+Program_v0.4 (31-10-2022)
+	An order que is created, this que can hold orders placed from the dashboard. The orders are taken out of
+	the que if the VGR is ready for the next order. The oldest possible order is taken out of the que. This
+	means that an impossible order can be skipped. A flag is set if the que is full, this way the order button can be disabled.
+
+	Changes:
+		A global user constant (tag) called Ci_Que_Length has been created.
+		A global datablock "Que" has been created.
+		The datablock contains an array of type "typ_Order_Workiece_Buttons", this stores the orders.
+		The length of this array is defined by the Ci_Que_Length.
+		The datablock contains an integer to keep track of how full the que is.
+		The datablock contains a boolean to keep track of whether the que is full.
+		The type "typ_HBW" has three integers added to keep track of the number of available material of each color.
+		In case 0 of "PRG_HBW_Ablauf" the stock is counted and stored in the three integers.
+		When outsourcing material it is directly subtracted from the stock (case 100). Because the VGR is faster
+		than the HBW, this could otherwise result is unwanted results.
+		PRG_Order has been completely rewritten.
+		When an order is placed (the timestamp changes) it is added to the que (if it is not full yet).
+		If there is an order in the que and the VGR is ready for an order, find the first possible order and send it to the VGR.
+	
+	Notes:
+		Ci_Que_Length has been set to 6.
+		The last element of the que is always empty, this simplifies the addition of new parameters.
+
+	Problems:
+		If an order gets placed when the que is full, it will be put into the que when there is space,
+		this order should not be included as it can result in undesired behaviour.
+		Feedback to dashboard for placed order has been deleted.
+
+
+Program_v0.5 (2-11-2022) (Not functional)
+	Mostly fixes and smaller changes.
+
+	Changes:
+		Added check to see if there is space for new material (in PRG_VGR_Ablauf).
+		Fixed search loop exit statements in PGR_HBW_Ablauf (still creates loop).
+		New orders placed when que is full are discarded by updating timestamp, even if que is full.
+		Added feedback to dashboard when order is placed back. The status 'ORDERED' is set when an order gets added to the que.
+
+	Fixes:
+		Deleted global datablock Parameters (not used)
+		Deleted datatype typ_Joystick (not used)
+		Renamed datatype typ_Config_Environment_Sensor (spelling error)
+		Renamed instance ConfigRateEnvironmentSensor (spelling error)
+		Deleted flag variable from PRG_Order (not used)
+		Changed static variables in FOR loops to temp variables in PGR_HBW_Ablauf (incorrect use of variables)
+		Changed static variables in FOR loops to temp variables in PGR_VGR_Ablauf (incorrect use of variables)
+		Changed static variables in FOR loops to temp variables in PGR_MPO_Ablauf (incorrect use of variables)
+		
+	Problems:
+		When an order without parameters is placed, the parameters from last order are used.
+
+
+Program_v0.6 (03-11-2022)
+	Tests and bugfixes.
+
+	Tests:
+		Product on input when HBW is full: passed
+		Order placed when que is full: passed
+
+	Changes:
+		Que is now retained when powered off.
+		Calculated PWM value in FB_Axis_Auto does not overwrite set PWM, only when specified.
+
+	Fixes:
+		Corrected exit statement HBW search for empty position.
+		Increased turntable speed when skipping saw.
+
+Program_v1.0 (22-11-2022)
+	Final version for the first part of the project
+
+	Changes:
+		Fixed SLD error status
+	
+	Fixes:
+		Fixed PLC program version in typ_Setup
+		Changed que to queue (spelling errror)
+
+
+
+Program_v1.1 (WIP)
+
+	
+	Changes:
+		Added typ_Queue_Element, this allows addition of more items per queue element
+
+	
+
+
+
+
+
+
+
+
