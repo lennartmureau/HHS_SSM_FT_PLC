@@ -127,8 +127,8 @@ Program_v0.6 (03-11-2022)
 		Order placed when que is full: passed
 
 	Changes:
-		Que is now retained when powered off.
-		Calculated PWM value in FB_Axis_Auto does not overwrite set PWM, only when specified.
+		Que is now retained when powered off
+		Calculated PWM value in FB_Axis_Auto does not overwrite set PWM, only when specified
 
 	Fixes:
 		Corrected exit statement HBW search for empty position.
@@ -146,15 +146,39 @@ Program_v1.0 (22-11-2022)
 
 
 
-Program_v1.1 (WIP)
-
+Program_v1.1 (24-01-2023)
+	Added variables for communication to the digital shadow
 	
 	Changes:
-		Added typ_Queue_Element, this allows addition of more items per queue element
+		Added the datablock Simulation_Variables, this is a non-optimazed datablock with the variables needed for the digital shadow
+		Added function 
 
-	
 
 
+Program_v1.2 (31-01-2023)
+	Added more and improved existing variables for the digital shadow
+
+	Changes:
+		Added product bind in Simulation_Variables, containing the current container being moved
+		Added product toggle, when changed, a product is summoned or removed depending on product color
+		Added a pickup offset to improve the point at which the container is "snapped" to the gripper
+		Changed te point of clearing the workpiece values in VGR_Ablauf
+
+	Fixes:
+		Fixed VGR rotation position errors using default values
+		Changed homing order after delivering product to avoid hitting the new outer shell
+
+	Note:
+		Because of the outer shell of the factory, all older programs should not be used anymore
+
+
+
+Program_v2.0 (02-02-2023)
+	Final version for the second part of the project, minor bugfixes
+
+	Fixes:
+		Added a variable for the pickup offset height (in gtyp_HBW)
+		Removed unused stepcases in VGR_Ablauf
 
 
 
